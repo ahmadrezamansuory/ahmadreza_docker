@@ -1,0 +1,46 @@
+version: '3.3'
+
+services:
+  app:
+    build: app
+    container_name: django-gunicorn
+    volumes:
+      - static_volume:/usr/src/app/static
+    restart: always
+    env_file:
+      - .django.env
+    ports:
+      - "8000:8000"
+    command:
+      "gunicorn --workers=2 --bind=0.0.0.0:8000 mysite.wsgi:application"
+    depends_on:
+      - db
+  nginx:
+    image: nginx:1.17
+    container_name: ngx
+    ports:
+      - "80:80"
+    volumes:
+      - /static:/static
+      - ./nginx:/etc/nginx/conf.d
+#      - type:'bind'
+#        source:'volume'
+#        target:'src/media'
+
+#      - type:'bind'
+#        source:'/root/test/app/mysite/static'
+#        target:'/src/mysite/static'
+
+    depends_on:
+      - app
+  db:
+    image: postgres:13.0-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=hello_django
+      - POSTGRES_PASSWORD=hello_django
+      - POSTGRES_DB=hello_django_dev
+volumes:
+  postgres_data:
+  static_volume:
